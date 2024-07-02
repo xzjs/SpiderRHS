@@ -1,6 +1,11 @@
+import json
 from pathlib import Path
 import re
+import time
+
+import requests
 from rhs.items import RhsItem
+from fake_useragent import UserAgent
 
 import scrapy
 
@@ -9,11 +14,41 @@ class RhsSpider(scrapy.Spider):
     name = "rhs"
 
     def start_requests(self):
-        urls = [
-            "https://www.rhs.org.uk/plants/59375/hedera-helix-goldchild-(v)/details",
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
+        url = "https://lwapp-uks-prod-psearch-01.azurewebsites.net/api/v1/plants/search/advanced"
+
+        startFrom = 0
+        totalHit = 100
+        while startFrom < totalHit:
+            payload = json.dumps({
+                "startFrom": startFrom,
+                "pageSize": 100,
+                "includeAggregation": False
+            })
+            ua = UserAgent()
+            headers = {
+                'Authorization': '',
+                'User-Agent': ua.random,
+                'Content-Type': 'application/json'
+            }
+            response = requests.request("POST",
+                                        url,
+                                        headers=headers,
+                                        data=payload)
+            data = response.json()
+            totalHit = data['totalHit']
+            startFrom += 100
+            for hit in data['hits']:
+                name = hit['botanicalName']
+                name = name.replace('em', '')
+                name = '-'.join(re.findall(r'[a-zA-Z0-9]+', name)).lower()
+                _url = "https://www.rhs.org.uk/plants/%d/%s/details" % (
+                    hit['id'], name)
+
+                yield scrapy.Request(
+                    url=_url,
+                    callback=self.parse,
+                )
+                time.sleep(1)
 
     def parse(self, response):
         item = RhsItem()
@@ -81,5 +116,5 @@ class RhsSpider(scrapy.Spider):
         urls = response.css('.cover-image__img::attr(style)').extract()
         pattern = re.compile(r"https.*?jpg")
         item['image_urls'] = [pattern.findall(url)[0] for url in urls]
-        print(item)
+
         yield item
