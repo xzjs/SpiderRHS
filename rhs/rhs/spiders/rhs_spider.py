@@ -47,6 +47,7 @@ class RhsSpider(scrapy.Spider):
                 yield scrapy.Request(
                     url=_url,
                     callback=self.parse,
+                    headers=headers,
                 )
                 time.sleep(1)
 
