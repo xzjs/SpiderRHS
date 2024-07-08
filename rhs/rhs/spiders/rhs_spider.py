@@ -61,7 +61,11 @@ class RhsSpider(scrapy.Spider):
 
         item['name'] = headE.css('h1 span').xpath('string(.)').extract_first()
 
-        item['summary'], item['ngcontent'] = headE.xpath('p/text()').extract()
+        temp = headE.xpath('p/text()').extract()
+        if len(temp)==2:
+            item['summary'], item['ngcontent'] = temp
+        else:
+            item['ngcontent'] = temp[0]
 
         attributesE = div.xpath('./div[3]/div')
         sizeE = attributesE.xpath('./div[1]/div[2]/div')
@@ -103,19 +107,18 @@ class RhsSpider(scrapy.Spider):
 
         positionE = attributesE.xpath('./div[4]/div[2]')
         position = {}
-        position['sun'] = positionE.xpath('./ul/li/div/div[2]/text()').get()
+        position['sun'] = positionE.css('.flag__body::text').getall()
         aspects = positionE.xpath('./p/span/text()').getall()
         position['aspect'] = ''.join(aspects)
-        position['exposure'] = positionE.xpath(
-            './div/div[1]/div/span/text()').get()
-        position['droughtResistance'] = positionE.xpath(
-            './div/div[1]/div/span/text()').get()
+        exposure = positionE.xpath('./div/div[1]/div/span/text()').extract()
+        position['exposure'] = ''.join(exposure)
         position['hardiness'] = positionE.xpath(
             './div/div[2]/div/span/text()').get()
         item['position'] = position
 
         urls = response.css('.cover-image__img::attr(style)').extract()
-        pattern = re.compile(r"https.*?jpg")
+        print(urls)
+        pattern = re.compile(r"url\s*\(['\"]?(https?://[^'\")]+)['\"]?\)")
         item['image_urls'] = [pattern.findall(url)[0] for url in urls]
 
         yield item

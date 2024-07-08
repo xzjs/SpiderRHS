@@ -3,3 +3,4 @@ rhs/images
 rhs.jsonl
 /spider
 *.pyc
+rhs/rhs.csv

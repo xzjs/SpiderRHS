@@ -1,15 +1,16 @@
 import re
 
+urls = [
+    "background-image:url('https://apps.rhs.org.uk/plantselectorimages/d_(e)_tail/visi46517.jpg');",
+    "background-image:url('https://apps.rhs.org.uk/plantselectorimages/detail/WSY0020456_9867.jpg');",
+    "background-image:url('https://apps.rhs.org.uk/plantselectorimages/detail/visi31159.jpg');",
+    "background-image:url('https://apps.rhs.org.uk/plantselectorimages/detail/visi46517.jpg');",
+    "background-image:url('https://apps.rhs.org.uk/plantselectorimages/detail/WSY0020456_9867.jpg');",
+    "background-image:url('https://apps.rhs.org.uk/plantselectorimages/detail/visi31159.jpg');",
+    'background-image:url(https://apps.rhs.org.uk/plantselectorimages/detail/WSY0020456_9867.jpg);',
+    "background-image:url('https://apps.rhs.org.uk/plantselectorimages/detail/RHS_RHS-0001436_1125.JPG');"
+]
 
-import re
-
-def extract_non_special_characters(text):
-    # 使用正则表达式提取字母和数字
-    result = re.findall(r'[a-zA-Z0-9]+', text)
-    # 将结果列表连接成字符串
-    return '-'.join(result)
-
-# 示例文本
-text = "Hello, World! 123"
-clean_text = extract_non_special_characters(text)
-print(clean_text)  # 输出 "HelloWorld123"
+pattern = re.compile(r"url\s*\(['\"]?(https?://[^'\")]+)['\"]?\)")
+image_urls = [pattern.findall(url) for url in urls]
+print(image_urls)
