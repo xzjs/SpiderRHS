@@ -16,40 +16,53 @@ class RhsSpider(scrapy.Spider):
     def start_requests(self):
         url = "https://lwapp-uks-prod-psearch-01.azurewebsites.net/api/v1/plants/search/advanced"
 
-        startFrom = 0
-        totalHit = 100
-        while startFrom < totalHit:
-            payload = json.dumps({
-                "startFrom": startFrom,
-                "pageSize": 100,
-                "includeAggregation": False
-            })
-            ua = UserAgent()
-            headers = {
-                'Authorization': '',
-                'User-Agent': ua.random,
-                'Content-Type': 'application/json'
-            }
-            response = requests.request("POST",
-                                        url,
-                                        headers=headers,
-                                        data=payload)
-            data = response.json()
-            totalHit = data['totalHit']
-            startFrom += 100
-            for hit in data['hits']:
-                name = hit['botanicalName']
-                name = name.replace('em', '')
-                name = '-'.join(re.findall(r'[a-zA-Z0-9]+', name)).lower()
-                _url = "https://www.rhs.org.uk/plants/%d/%s/details" % (
-                    hit['id'], name)
+        plantTypes = 21
+        habits = 12
+        foliages = [
+            'isAgm', 'isPlantsForPollinators', 'isNative', 'notedForFragrance'
+        ]
 
-                yield scrapy.Request(
-                    url=_url,
-                    callback=self.parse,
-                    headers=headers,
-                )
-                time.sleep(1)
+        for plantType in range(1, plantTypes + 1):
+            for habit in range(1, habits + 1):
+                for foliage in foliages:
+                    startFrom = 0
+                    totalHit = 100
+                    while startFrom < totalHit:
+                        payload = json.dumps({
+                            "startFrom": startFrom,
+                            "pageSize": 100,
+                            "includeAggregation": True,
+                            "plantType": plantType,
+                            "habit": habit,
+                            foliage: True
+                        })
+                        ua = UserAgent()
+                        headers = {
+                            'Authorization': '',
+                            'User-Agent': ua.random,
+                            'Content-Type': 'application/json'
+                        }
+                        response = requests.request("POST",
+                                                    url,
+                                                    headers=headers,
+                                                    data=payload)
+                        data = response.json()
+                        totalHit = data['totalHit']
+                        startFrom += 100
+                        for hit in data['hits']:
+                            name = hit['botanicalName']
+                            name = name.replace('em', '')
+                            name = '-'.join(re.findall(r'[a-zA-Z0-9]+',
+                                                       name)).lower()
+                            _url = "https://www.rhs.org.uk/plants/%d/%s/details" % (
+                                hit['id'], name)
+
+                            yield scrapy.Request(
+                                url=_url,
+                                callback=self.parse,
+                                headers=headers,
+                            )
+                            time.sleep(1)
 
     def parse(self, response):
         item = RhsItem()
@@ -62,7 +75,7 @@ class RhsSpider(scrapy.Spider):
         item['name'] = headE.css('h1 span').xpath('string(.)').extract_first()
 
         temp = headE.xpath('p/text()').extract()
-        if len(temp)==2:
+        if len(temp) == 2:
             item['summary'], item['ngcontent'] = temp
         else:
             item['ngcontent'] = temp[0]
