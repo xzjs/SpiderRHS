@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import re
 import time
@@ -21,8 +22,15 @@ class RhsSpider(scrapy.Spider):
         foliages = [
             'isAgm', 'isPlantsForPollinators', 'isNative', 'notedForFragrance'
         ]
+        start = 1
+        if os.path.exists('archive.key'):
+            print('resume from %d' % start)
+            with open('archive.key', 'r') as f:
+                start = int(f.read())
 
-        for plantType in range(1, plantTypes + 1):
+        for plantType in range(start, plantTypes + 1):
+            with open('archive.key', 'w') as f:
+                f.write(str(plantType))
             for habit in range(1, habits + 1):
                 for foliage in foliages:
                     startFrom = 0
@@ -133,5 +141,14 @@ class RhsSpider(scrapy.Spider):
         print(urls)
         pattern = re.compile(r"url\s*\(['\"]?(https?://[^'\")]+)['\"]?\)")
         item['image_urls'] = [pattern.findall(url)[0] for url in urls]
+
+        pannelE = response.css('.panel__body dl')
+        botanical = {}
+        spans = pannelE.xpath('span')
+        for span in spans:
+            key = span.xpath('dt').xpath('string(.)').extract().pop()
+            value = span.xpath('dd').xpath('string(.)').extract().pop()
+            botanical[key] = value
+        item['botanical'] = botanical
 
         yield item

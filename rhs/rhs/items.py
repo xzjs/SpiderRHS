@@ -14,6 +14,7 @@ class RhsItem(scrapy.Item):
     growingConditions = scrapy.Field()
     colours = scrapy.Field()
     position = scrapy.Field()
+    botanical = scrapy.Field()
     image_urls = scrapy.Field()
     images = scrapy.Field()
 

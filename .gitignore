@@ -4,3 +4,4 @@ rhs.jsonl
 /spider
 *.pyc
 rhs/rhs.csv
+rhs/archive.key
